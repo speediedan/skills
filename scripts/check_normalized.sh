@@ -27,10 +27,16 @@ PLUGINS=(--with mdformat-gfm --with mdformat_frontmatter)
 
 command -v uvx >/dev/null 2>&1 || UVX="$(ls -d /mnt/cache/*/.venvs/*/bin/uvx 2>/dev/null | head -1)"
 UVX="${UVX:-uvx}"
-command -v "$UVX" >/dev/null 2>&1 || {
-  echo "  normalization UNCHECKED: no uvx available (skipping, not failing)"
-  exit 0
+# The skip path names the command that would enable the check. Without it, "UNCHECKED" scrolls past
+# in a wall of hook output, and the person who cannot run the formatter is also the person least
+# likely to notice they did not. Naming the command turns a status line into an action.
+say_skipped() {
+  echo "  normalization UNCHECKED${1:+ for $1}: skipping, not failing."
+  echo "    To enable it:  pipx install uv   (or any uv providing uvx), then re-run this hook."
+  echo "    Until then, normalization is verified only by contributors who can run the formatter."
 }
+
+command -v "$UVX" >/dev/null 2>&1 || { say_skipped; exit 0; }
 
 rc=0
 tmp="$(mktemp -d)"
@@ -46,7 +52,7 @@ for f in "${files[@]}"; do
   [ -f "$f" ] || continue
   cp "$f" "$tmp/candidate.md"
   if ! timeout 240 "$UVX" --from "$PIN" "${PLUGINS[@]}" mdformat "$tmp/candidate.md" >/dev/null 2>&1; then
-    echo "  normalization UNCHECKED for ${f}: formatter did not run (skipping, not failing)"
+    say_skipped "${f}"
     continue
   fi
   if ! diff -q "$f" "$tmp/candidate.md" >/dev/null 2>&1; then
