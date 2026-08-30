@@ -1,0 +1,12 @@
+{
+  "name": "common-infra-skills",
+  "version": "0.1.0",
+  "description": "Host-independent infrastructure skills for repos sharing a self-hosted CI agent and GPU host. Currently: serializing GPU work through a host-wide lease.",
+  "author": {
+    "name": "speediedan",
+    "url": "https://github.com/speediedan"
+  },
+  "homepage": "https://github.com/speediedan/skills",
+  "license": "Apache-2.0",
+  "keywords": ["gpu", "ci", "self-hosted", "agent-skills"]
+}

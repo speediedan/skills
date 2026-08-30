@@ -1,0 +1,15 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "speediedan-skills",
+  "owner": {
+    "name": "speediedan",
+    "url": "https://github.com/speediedan"
+  },
+  "plugins": [
+    {
+      "name": "common-infra-skills",
+      "source": "./plugins/common-infra-skills",
+      "description": "Host-independent infrastructure skills shared across repos that run CI on a self-hosted agent pool"
+    }
+  ]
+}
