@@ -179,7 +179,8 @@ Two things are needed and they are not interchangeable:
 1. **Clear the existing leftover once, with host privileges.** Only someone who can act as root on the
    agent host can remove files owned by a container subuid. Nothing inside a pipeline can do it, and no
    amount of re-running helps.
-2. **Stop it recurring**, with a step that runs INSIDE the container, where that uid still owns what it
+
+1. **Stop it recurring**, with a step that runs INSIDE the container, where that uid still owns what it
    wrote, under `condition: always()` so a failed run cleans up too:
 
    ```yaml

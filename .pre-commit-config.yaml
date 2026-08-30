@@ -24,6 +24,16 @@ repos:
       # untouched and still be wrong, which is the whole failure mode (a directory renamed, a
       # frontmatter delimiter lost). always_run with pass_filenames false because the check walks the
       # tree itself and validates relationships between files, not files in isolation.
+      # Enforces mechanically what was previously a note in another repo's script header, which is
+      # to say not enforced: a section was added to a skill without re-running the normalizer, the
+      # master was published unnormalized, and a consumer found it when their own hook rewrote the
+      # file. The requirement had been recorded, verified once, and then depended on for weeks.
+      - id: skills-normalized
+        name: skills are a fixed point of the pinned formatter
+        entry: scripts/check_normalized.sh
+        language: script
+        files: 'SKILL\.md$'
+
       - id: marketplace-structure
         name: repo is installable as a plugin marketplace
         entry: scripts/check_structure.sh
