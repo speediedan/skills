@@ -7,8 +7,6 @@ description: Serialize GPU work on a shared multi-GPU host - plan around queuing
 
 ## When to use this skill
 
-<!-- propagation rehearsal marker: verifying upstream edits reach consumers -->
-
 - A GPU run is sitting at `'gpu' lease is held; waiting...` and you need to decide whether to wait.
 - `--status` shows a holder you did not start, and you need to know whether it is safe to clear.
 - GPU tests are flaky, OOM, or unusually slow with no code change to explain it: suspect contention.
