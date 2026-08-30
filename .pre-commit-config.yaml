@@ -1,0 +1,21 @@
+# Formatting is pinned deliberately: consuming repos vendor these skills verbatim, and at least one
+# runs mdformat over its own copy. If the stored form here is not that formatter's output, the
+# consumer's hook rewrites the file on contact and re-creates drift on every commit, permanently.
+# Bumping `rev` or changing the plugin list may reformat the skills. After any such bump: re-run the
+# hooks here, then re-push to consumers and confirm their hooks leave the files unmodified.
+repos:
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.17
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat_frontmatter
+
+  - repo: local
+    hooks:
+      - id: skill-neutrality
+        name: skills name no repo, org, or host
+        entry: scripts/check_neutrality.sh
+        language: script
+        files: 'SKILL\.md$'
