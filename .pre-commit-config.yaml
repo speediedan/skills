@@ -19,3 +19,14 @@ repos:
         entry: scripts/check_neutrality.sh
         language: script
         files: 'SKILL\.md$'
+
+      # Runs on every commit rather than only when the manifest changes: the manifest can be left
+      # untouched and still be wrong, which is the whole failure mode (a directory renamed, a
+      # frontmatter delimiter lost). always_run with pass_filenames false because the check walks the
+      # tree itself and validates relationships between files, not files in isolation.
+      - id: marketplace-structure
+        name: repo is installable as a plugin marketplace
+        entry: scripts/check_structure.sh
+        language: script
+        always_run: true
+        pass_filenames: false
