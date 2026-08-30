@@ -133,10 +133,21 @@ for p in plugins:
                 rows = edata if isinstance(edata, list) else edata.get("evals") or []
                 if not rows:
                     bad(f"{ev} defines no eval cases")
+                # skill_name occurs at the TOP LEVEL in the object form and can only be per-row in
+                # the list form, so both have to be checked. An earlier version checked only per-row
+                # and therefore examined a key that is absent from every real file: green because it
+                # inspected nothing, which is indistinguishable from green because all was well.
+                names = []
+                if isinstance(edata, dict) and edata.get("skill_name"):
+                    names.append(edata["skill_name"])
                 for r in rows if isinstance(rows, list) else []:
-                    sn = (r or {}).get("skill_name")
-                    if sn and sn != entry:
-                        bad(f"{ev} references skill_name '{sn}' but lives under '{entry}'")
+                    if isinstance(r, dict) and r.get("skill_name"):
+                        names.append(r["skill_name"])
+                if not names:
+                    bad(f"{ev} declares no skill_name; a rename cannot be detected without one")
+                for sn in names:
+                    if sn != entry:
+                        bad(f"{ev} declares skill_name '{sn}' but lives under '{entry}'")
 
     if found == 0:
         bad(f"plugin '{name}' contains no skills")
