@@ -119,6 +119,25 @@ for p in plugins:
                 bad(f"skill name '{sname}' appears in both '{seen_skill_names[sname]}' and '{name}'")
             seen_skill_names[sname] = name
 
+        # Evals are a SECOND structural position where a skill's propositions live, and they are
+        # load-bearing in the opposite direction: a stale skill misleads a reader, a stale eval
+        # CERTIFIES the misleading and would keep rewarding the old behaviour after the skill is
+        # fixed. Validate the mechanical parts here; the propositions still need a human read.
+        ev = os.path.join(sd, "evals", "evals.json")
+        if os.path.isfile(ev):
+            try:
+                edata = json.load(open(ev))
+            except Exception as e:
+                bad(f"{ev} is not valid JSON: {e}")
+            else:
+                rows = edata if isinstance(edata, list) else edata.get("evals") or []
+                if not rows:
+                    bad(f"{ev} defines no eval cases")
+                for r in rows if isinstance(rows, list) else []:
+                    sn = (r or {}).get("skill_name")
+                    if sn and sn != entry:
+                        bad(f"{ev} references skill_name '{sn}' but lives under '{entry}'")
+
     if found == 0:
         bad(f"plugin '{name}' contains no skills")
 
