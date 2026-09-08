@@ -1,17 +1,19 @@
 # skills
 
-Agent skills shared across repositories that run CI on a self-hosted agent pool and share a multi-GPU
-host. Written for Claude Code, and deliberately free of anything tying them to one repository, so they
-are useful outside the repos they came from.
+Agent skills shared across repositories. Written for Claude Code, and deliberately free of anything
+tying them to one repository, so they are useful outside the repos they came from. Some cover shared
+infrastructure (a self-hosted CI pool, a multi-GPU host); others cover work that is not
+infrastructure at all, which is why they are grouped into plugins by subject.
 
 ## What is here
 
-| Plugin | Skill | Covers |
-| --- | --- | --- |
-| `common-infra-skills` | `gpu-lease` | Serializing GPU work through a host-wide lease: planning around queuing, reserving GPUs for interactive sessions, recovering from stuck or stale leases |
-| `common-infra-skills` | `az-pipelines-ops` | Operating a self-hosted Azure DevOps pipeline: telling a gated build from an unauthorized one from a genuinely stuck one, releasing approvals, confirming dispatch |
+| Plugin                  | Skill                  | Covers                                                                                                                                                                                                                                             |
+| ----------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `common-infra-skills`   | `gpu-lease`            | Serializing GPU work through a host-wide lease: planning around queuing, reserving GPUs for interactive sessions, recovering from stuck or stale leases                                                                                            |
+| `common-infra-skills`   | `az-pipelines-ops`     | Operating a self-hosted Azure DevOps pipeline: telling a gated build from an unauthorized one from a genuinely stuck one, releasing approvals, confirming dispatch                                                                                 |
+| `docs-authoring-skills` | `cross-platform-latex` | Writing LaTeX in Markdown that renders on GitHub, Sphinx/MyST and MkDocs at once: the config each target needs, the constructs that diverge silently, and a checker plus a probe that re-measures the compatibility matrix rather than trusting it |
 
-Both are host-independent. They name no repository, no organization, and no host values, which is
+All are host-independent. They name no repository, no organization, and no host values, which is
 what makes them shareable at all. Anything genuinely specific to one repository belongs in that
 repository's `AGENTS.md`, and the skills defer to it by name rather than guessing.
 
@@ -19,12 +21,12 @@ repository's `AGENTS.md`, and the skills defer to it by name rather than guessin
 
 Pick one deliberately. They differ in who gets the skills, not in what the skills say.
 
-|  | Plugin install | Vendoring |
-| --- | --- | --- |
-| Who gets them | You, on this machine | Anyone who clones the consuming repo |
-| Updates | `/plugin update`, no repo change | A sync step and a commit |
-| Invoked as | `common-infra-skills:gpu-lease` | `gpu-lease` |
-| Best when | You want them across many repos | A repo's contributors should get them with nothing installed |
+|               | Plugin install                   | Vendoring                                                    |
+| ------------- | -------------------------------- | ------------------------------------------------------------ |
+| Who gets them | You, on this machine             | Anyone who clones the consuming repo                         |
+| Updates       | `/plugin update`, no repo change | A sync step and a commit                                     |
+| Invoked as    | `common-infra-skills:gpu-lease`  | `gpu-lease`                                                  |
+| Best when     | You want them across many repos  | A repo's contributors should get them with nothing installed |
 
 They coexist without colliding, because plugin skills are namespaced and vendored ones are bare. The
 subtler hazard is that both can be listed and invocable under different names with **different
@@ -67,7 +69,7 @@ work and nobody finds out why.
 
 1. Copy `consumer/check_vendored_skills.py` into the consuming repo, conventionally `scripts/`.
 
-2. Add a manifest at `.claude/skills/.shared-skills.sha256`, in `sha256sum` format:
+1. Add a manifest at `.claude/skills/.shared-skills.sha256`, in `sha256sum` format:
 
    ```
    # Vendored from https://github.com/speediedan/skills (plugin: common-infra-skills).
@@ -78,7 +80,7 @@ work and nobody finds out why.
 
    Generate it with `sha256sum .claude/skills/*/SKILL.md` from the repo root.
 
-3. Wire the hook in `.pre-commit-config.yaml`:
+1. Wire the hook in `.pre-commit-config.yaml`:
 
    ```yaml
      - repo: local

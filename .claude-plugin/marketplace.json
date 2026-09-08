@@ -10,6 +10,11 @@
       "name": "common-infra-skills",
       "source": "./plugins/common-infra-skills",
       "description": "Host-independent infrastructure skills shared across repos that run CI on a self-hosted agent pool"
+    },
+    {
+      "name": "docs-authoring-skills",
+      "source": "./plugins/docs-authoring-skills",
+      "description": "Skills for authoring documentation that must render correctly on more than one engine"
     }
   ]
 }

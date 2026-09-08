@@ -1,0 +1,21 @@
+{
+  "name": "docs-authoring-skills",
+  "version": "0.1.0",
+  "description": "Skills for authoring documentation that renders correctly across more than one engine: writing LaTeX math that survives GitHub, Sphinx/MyST, MkDocs, and notebook rendering without per-platform forks.",
+  "author": {
+    "name": "speediedan",
+    "url": "https://github.com/speediedan"
+  },
+  "homepage": "https://github.com/speediedan/skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "latex",
+    "markdown",
+    "math",
+    "sphinx",
+    "myst",
+    "mkdocs",
+    "documentation",
+    "agent-skills"
+  ]
+}
