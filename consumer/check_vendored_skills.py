@@ -123,11 +123,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     return 0
 
-    # Announce what was verified. A silent pass is indistinguishable from a hook that did not run,
-    # and that ambiguity has cost this project real time more than once.
-    print(f"vendored skills unmodified: {checked} file(s) match {MANIFEST.relative_to(REPO)}")
-    return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())
