@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# Verify this repo is installable as a Claude Code plugin marketplace.
+# Gate a commit on everything that makes a skill publishable: structure, spec validity, neutrality.
 #
-# The failure this exists to catch is publishing something that parses as a repo but does not work as
-# a marketplace: a manifest whose `source` points at a directory that was renamed, a plugin without a
-# plugin.json, a SKILL.md whose frontmatter lost its closing delimiter. Every one of those is invisible
-# to a reader, invisible to git, and fatal to an installer. A consumer discovers it at install time,
-# which is the worst place to discover it.
+# This merges the former check_structure.sh and check_neutrality.sh into one gate. They were split
+# by accident of authorship, not by contract: both are hard, dependency-free checks over the same
+# tree, and running one without the other certifies half the property. A skill that resolves but
+# names a host is unpublished-but-leaked; a neutral skill that does not resolve is clean-but-broken.
+# One script, one verdict.
 #
-# Deliberately dependency-free (bash + python3 stdlib) so it runs in a pre-commit hook, in CI, and on a
-# contributor's machine without a toolchain.
+# check_normalized.sh stays separate deliberately. It depends on a pinned formatter that may not be
+# installed, so it skips silently when it cannot run. Folding a sometimes-skip into a never-skip
+# gate would make the gate's verdict depend on who runs it, which is the ambiguity the vendored
+# checker exists to remove.
+#
+# Deliberately dependency-free (bash + python3 stdlib) so it runs in a pre-commit hook, in CI, and
+# on a contributor's machine without a toolchain.
+#
+# Usage: check_skills.sh [file...]   (no args: walk the whole tree; the pre-commit hook runs it
+#                                     with always_run and pass_filenames false)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -21,8 +29,9 @@ MARKETPLACE=".claude-plugin/marketplace.json"
 [ -f "$MARKETPLACE" ] || { bad "$MARKETPLACE is missing; nothing can install this repo"; exit 1; }
 [ -f LICENSE ] || bad "LICENSE is missing; a public skills repo without one is not reusable"
 
+# Phase 1: structure plus Agent Skills spec validity (agentskills.io/specification).
 python3 - "$MARKETPLACE" <<'PY' || fail=1
-import json, os, sys, re
+import json, os, re, sys
 
 mp_path = sys.argv[1]
 try:
@@ -36,6 +45,8 @@ def bad(m):
     global rc
     print(f"FAIL: {m}")
     rc = 1
+
+NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 for key in ("name", "plugins"):
     if key not in mp:
@@ -107,17 +118,36 @@ for p in plugins:
             bad(f"{sk} frontmatter is not closed by '---'")
             continue
         fm = text[4:end]
+
+        # Split the frontmatter into key -> raw value, folding YAML continuation lines (mdformat
+        # wraps long values mid-word, so a description routinely spans several physical lines).
+        fields = {}
+        cur = None
+        for line in fm.splitlines():
+            m = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$", line)
+            if m:
+                cur = m.group(1)
+                fields[cur] = m.group(2)
+            elif cur is not None:
+                fields[cur] += " " + line.strip()
         for field in ("name", "description"):
-            if not re.search(rf"^{field}:\s*\S", fm, re.M):
+            if not fields.get(field, "").strip():
                 bad(f"{sk} frontmatter has no '{field}'")
-        m = re.search(r"^name:\s*(\S+)", fm, re.M)
-        if m:
-            sname = m.group(1)
+
+        sname = fields.get("name", "").strip()
+        if sname:
             if sname != entry:
                 bad(f"{sk} declares name '{sname}' but lives in directory '{entry}'")
+            if len(sname) > 64 or not NAME_RE.match(sname):
+                bad(f"{sk} declares name '{sname}': must be <=64 chars, lowercase "
+                    "alphanumeric with single-hyphen separators (Agent Skills spec)")
             if sname in seen_skill_names:
                 bad(f"skill name '{sname}' appears in both '{seen_skill_names[sname]}' and '{name}'")
             seen_skill_names[sname] = name
+
+        desc = fields.get("description", "").strip()
+        if desc and not (1 <= len(desc) <= 1024):
+            bad(f"{sk} description is {len(desc)} chars; the spec allows 1-1024")
 
         # Evals are a SECOND structural position where a skill's propositions live, and they are
         # load-bearing in the opposite direction: a stale skill misleads a reader, a stale eval
@@ -154,11 +184,70 @@ for p in plugins:
 
 if rc == 0:
     print(f"  marketplace '{mp.get('name')}': {len(plugins)} plugin(s), "
-          f"{len(seen_skill_names)} skill(s), all resolvable")
+          f"{len(seen_skill_names)} skill(s), all resolvable and spec-valid")
 raise SystemExit(rc)
 PY
 
+# Phase 2: neutrality. A published skill must not name a specific repository, organization, or host.
+#
+# Neutrality is what makes these skills useful outside the repos they came from, and since the repo
+# is public it is also a disclosure property: a private identifier committed here is public the
+# moment it is pushed, and deleting it later does not unpublish it. That irreversibility is why this
+# is a pre-commit gate rather than a report.
+#
+# Scope is every file under plugins/, not just SKILL.md: a bundled script or reference carrying a
+# host name leaks exactly as a SKILL.md line does. Anything genuinely specific to one repository
+# belongs in that repository's AGENTS.md, and the skill should defer to it by name. Anything
+# specific to a machine belongs in a local, uncommitted instructions file.
+#
+# Patterns are kept deliberately literal and readable rather than clever: a reader has to be able to
+# tell at a glance what is banned and add to it confidently.
+PATTERNS=(
+  # specific repositories and organizations
+  'interpretune'
+  'finetuning-scheduler'
+  'it-interp-engine-adapter'
+  'dev\.azure\.com'
+  # host and account identifiers
+  'az_pipeline_agent'
+  'di_leases'
+  'speediedl'
+  # credentials by name
+  'AZURE_DEVOPS_EXT_PAT'
+  'CODECOV_TOKEN'
+  'HF_TOKEN'
+)
+
+nfiles=("$@")
+if [ ${#nfiles[@]} -eq 0 ]; then
+  mapfile -t nfiles < <(find plugins -type f -not -path './.git/*')
+fi
+
+for f in "${nfiles[@]}"; do
+  [ -f "$f" ] || continue
+  case "$f" in plugins/*) ;; *) continue ;; esac
+  for p in "${PATTERNS[@]}"; do
+    if hits=$(grep -n -iE "$p" "$f"); then
+      echo "NEUTRALITY: ${f} contains '${p}'"
+      printf '%s\n' "$hits" | sed 's/^/    /'
+      fail=1
+    fi
+  done
+done
+
 if [ "$fail" -eq 0 ]; then
-  note "structure OK"
+  note "skills gate OK: structure, spec, neutrality"
+else
+  cat >&2 <<'MSG'
+
+A published skill must be resolvable, spec-valid, and neutral.
+
+  repo-specific fact  -> that repository's AGENTS.md, and have the skill defer to it
+  machine-specific    -> a local, uncommitted instructions file
+  credential name     -> neither; describe what is needed, not what it is called here
+
+Neutrality is a pre-commit gate rather than a report because the repo is public: once pushed,
+removing the line later does not unpublish it.
+MSG
 fi
 exit "$fail"

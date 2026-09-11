@@ -124,19 +124,22 @@ differences from real ones.
 If you fix something in a vendored copy, send it here rather than leaving it local. A local fix is
 discarded by the next refresh, and every consumer keeps the bug.
 
-Skills in this repository are checked on commit for three things, so an edit that breaks one will be
-refused rather than published:
+Skills in this repository are checked on commit by one gate, so an edit that breaks a
+property will be refused rather than published:
 
-- **Neutrality**: no repository, organization, host, or credential names. This is what makes them
-  publishable, and once pushed it cannot be undone, so it is a gate rather than a report.
-- **Structure**: the marketplace manifest resolves, every plugin has a `plugin.json` whose name
-  agrees, and every `SKILL.md` opens and closes its frontmatter.
+- **Structure + spec**: the marketplace manifest resolves, every plugin has a `plugin.json`
+  whose name agrees, and every `SKILL.md` opens and closes its frontmatter with a spec-valid
+  `name` (matching its directory, lowercase alphanumeric with single hyphens) and `description`
+  (1-1024 chars).
+- **Neutrality**: no repository, organization, host, or credential names in any file under
+  `plugins/`. This is what makes them publishable, and once pushed it cannot be undone, so it is
+  a gate rather than a report.
 - **Normalization**: each `SKILL.md` is a fixed point of `mdformat==0.7.17` with `mdformat-gfm` and
-  `mdformat_frontmatter`. At least one consuming repo runs that formatter over its own copy, so an
-  unnormalized file here would be rewritten on contact there and re-create drift on every commit.
+  `mdformat_frontmatter` (separate script, `scripts/check_normalized.sh`, since it skips when the
+  formatter is unavailable). At least one consuming repo runs that formatter over its own copy, so
+  an unnormalized file here would be rewritten on contact there and re-create drift on every commit.
 
-Run them yourself with `scripts/check_neutrality.sh`, `scripts/check_structure.sh`, and
-`scripts/check_normalized.sh`.
+Run them yourself with `scripts/check_skills.sh` and `scripts/check_normalized.sh`.
 
 ## Requirements
 
