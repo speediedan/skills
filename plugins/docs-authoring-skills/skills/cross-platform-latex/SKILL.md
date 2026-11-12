@@ -111,9 +111,9 @@ Write `$W_U \mathrm{norm}(J_\ell h)$`, not `$W_U \operatorname{norm}(J_\ell h)$`
 engine does not render `\operatorname`: the expression shows the raw macro or broken output there,
 while MyST, MkDocs and notebook targets render it correctly. This failure is in the math engine, not
 the Markdown parser, so the TeX reaches GitHub's engine verbatim and the probe below (which reads
-what the parser hands over) cannot see it. It was established from rendered pages instead: a GitHub
-issue tracking it (`github/markup#1688`) carries reports through 2026 and was closed as belonging to
-GitHub's renderer rather than that repository, with no fix.
+what the parser hands over) cannot see it. The evidence is reports of rendered pages instead: a
+GitHub issue tracking it (`github/markup#1688`) carries them through 2026 and was closed as belonging
+to GitHub's renderer rather than that repository, with no fix.
 
 `\mathrm{softmax}`, `\mathrm{rms}` and `\mathrm{norm}` set the name upright, which is what a reader
 needs. The one difference is spacing: `\operatorname` adds operator spacing around the name, and

@@ -88,8 +88,8 @@ does not support passes that check as `verbatim` and still fails for the reader,
 rendered page rather than the probe:
 
 - **`\operatorname{...}`, broken on GitHub.** The TeX reaches GitHub's engine intact and does not
-  render; MyST, MkDocs and notebook targets render it. Observed on rendered github.com pages and in
-  the reports on `github/markup#1688` (reports through 2026, closed upstream as belonging to GitHub's
+  render; MyST, MkDocs and notebook targets render it. Not measured by the probe: the evidence is the
+  rendered-page reports on `github/markup#1688` (through 2026, closed upstream as belonging to GitHub's
   renderer, no fix). Use `\mathrm{...}`. Re-check by viewing a page that uses it on github.com, not
   with `probe_renderers.py`.
 
