@@ -107,17 +107,31 @@ Not actionable by a contributor and not detectable offline, so it is deliberatel
 pre-commit hook: that would mean a network call on every commit, or a hook that fails on a clean
 clone, which is the `--no-verify` problem again.
 
-Check it when you choose to, by diffing against a clone of this repository:
+`consumer/check_skills_upstream.py` checks it from CI instead. Copy it into the consuming repo's `scripts/` beside
+`check_vendored_skills.py`. It reads the same manifests to learn which skills are vendored (so repo-local skills
+beside them are never compared), resolves this repository's `main` to one commit, and compares each vendored skill
+directory with the master's file by file: a changed file prints a diff, and a file only one side has is reported
+too, because a stale script beside a current `SKILL.md` still runs. It exits 0 when every copy is identical, 1 on
+drift and 2 when it could not read the master or a manifest, so an unreachable master never reads as a pass.
 
-```bash
-diff -r plugins/common-infra-skills/skills/gpu-lease  /path/to/repo/.claude/skills/gpu-lease
+Run it as its own job, never as a hook:
+
+```yaml
+  skills-upstream-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: vendored skills match the shared master
+        run: python3 scripts/check_skills_upstream.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 ```
 
-If you maintain several consuming repos, script that comparison once rather than remembering it. The
-useful shape is a `status` mode that reports every consumer's drift in one run, refuses when its own
-clone of this repository is stale (otherwise every consumer looks drifted at once, which is a
-precondition failure wearing a content failure's costume), and distinguishes formatting-only
-differences from real ones.
+A failing job is the point: when the master moves, every consumer goes red until it refreshes its copies, which is
+the only signal that reaches the people who can take the refresh. A consumer that would rather not have unrelated
+pull requests go red can run the same job on a schedule instead. `--against-dir <clone>` compares with a local clone
+of this repository, and `--root <repo>` checks a consumer other than the one the script sits in.
 
 ## Contributing back
 
