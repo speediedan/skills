@@ -40,6 +40,7 @@ touches the GPU, wrap it explicitly:
 ```bash
 $GPU_LEASE_CMD -- python -m pytest tests/... -v     # block until free, then run
 $GPU_LEASE_CMD --cpu-heavy -- <cmd>                 # also take the CPU lease (profiling/benchmarks)
+$GPU_LEASE_CMD --lease cpu-light -- <cmd>           # a CPU-only local test suite: yields to CI
 $GPU_LEASE_CMD --timeout 3600 -- <cmd>              # bound the wait; exit 75 (EX_TEMPFAIL) on expiry
 $GPU_LEASE_CMD --status                             # who holds each lease, since when, running what
 $GPU_LEASE_CMD --status --json                      # the same, machine-readable (see below)
@@ -55,6 +56,12 @@ stand in for `gpu_lease.sh` on a host with a different scheduler.
 
 Use `--cpu-heavy` for profiling and benchmark legs: their numbers are only comparable on an otherwise-quiet
 machine, so they should exclude CPU-only work too, even when it would not affect correctness.
+
+Run a CPU-only local test suite under `--lease cpu-light`, not `cpu-heavy`. It admits one such suite per
+host, starts only while nobody holds or waits for `cpu-heavy`, and a `cpu-heavy` request (a CI GPU phase,
+a benchmark) never waits for it. A local suite under `cpu-heavy` can hold a host for an hour or more
+while a CI phase queues behind it with the GPUs idle. `cpu-light` cannot be combined with a GPU lease or
+with `--cpu-heavy`.
 
 ## Planning around it
 
