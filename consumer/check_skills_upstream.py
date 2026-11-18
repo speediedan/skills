@@ -102,7 +102,7 @@ class Master:
         self.index = self._index(e["path"] for e in tree["tree"] if e["type"] == "blob")
 
     def _index(self, paths) -> dict[str, dict[str, str]]:
-        """``{skill: {path inside the skill: path in the master}}`` for every ``plugins/<p>/skills/<skill>/`` file."""
+        """``{skill: {path inside the skill: path in the master}}`` over ``plugins/<p>/skills/<skill>/``."""
         index: dict[str, dict[str, str]] = {}
         for path in paths:
             parts = Path(path).parts
@@ -171,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
         "--skills-dir",
         action="append",
         type=Path,
-        help="a vendored tree to check (repeatable; default .agents/skills, plus .claude/skills when it has a manifest)",
+        help="a vendored tree to check (repeatable; default .agents/skills, and .claude/skills if it has a manifest)",
     )
     args = ap.parse_args(argv)
     if args.root:
