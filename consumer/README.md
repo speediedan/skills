@@ -20,7 +20,8 @@ copy is refreshed from upstream. The person who wrote it loses the work and nobo
 is invisible without a check, and unlike "the master has moved ahead", it is something the person who
 trips it can act on: send the change upstream instead.
 
-**What it deliberately does not do.** It does not detect that upstream has moved ahead of your copy.
+**What it deliberately does not do.** It does not detect that upstream has moved ahead of your copy
+(`check_skills_upstream.py`, below, does).
 That needs upstream to be available, so it would mean a network call on every commit or a dependency
 that fails on a clean clone. A hook that fails on a clean checkout teaches contributors to pass
 `--no-verify`, which disables every other hook too, and that trade is not worth making for a condition
@@ -95,3 +96,11 @@ indistinguishable from a clean pass, which is the ambiguity the check exists to 
 
 Written by the maintainer of a consuming repository and generalized here so the other consumers do not
 each reinvent it.
+
+## `check_skills_upstream.py`
+
+The other half: whether this repository's `main` has moved ahead of your vendored copies. It needs the network, so
+it runs as its own CI job rather than a hook (the job is in the top-level README). It learns which skills are
+vendored from the same manifests, compares each vendored skill directory with the master's file by file at one
+resolved commit, and exits 0 identical, 1 drift (each difference printed) or 2 unreadable. Set `GITHUB_TOKEN` in CI
+so its two API calls are not rate-limited anonymously.
